@@ -188,11 +188,11 @@ Questions to flesh out:
 - Should a mode end manually, after a timer, or when an app closes?
 - If you change a setting yourself during a mode, should exiting preserve that change?
 
-## A possible first release
+## Confirmed first release
 
-Start with universal hotkeys, instant window switching, the command bar, and the temporary shelf. This combines actions you use immediately with a way to discover them.
+Start with universal hotkeys, app and window switching, the command bar, and clipboard history. Seemless will live mainly in the menu bar, with a command bar and floating panels.
 
-Add saved workspaces and clipboard history after the basic interactions feel reliable. This order is a proposal, not a confirmed scope.
+The temporary shelf, saved workspaces, and other feature ideas remain on the roadmap. The [product brief](product-brief.md) tracks confirmed decisions and proposed interaction defaults.
 
 ## Decisions for our next discussion
 
@@ -202,6 +202,6 @@ The next step is to choose the everyday workflows this app should improve:
 - The shortcuts you already use and want to preserve.
 - The repeated actions that currently take too many clicks.
 - Whether the first release is for your own use or eventual distribution.
-- Which features belong in the first release and which can wait.
+- The detailed behaviour of the four features chosen for the first release.
 
 Then we can define each chosen feature's behaviour, interface, edge cases, and a concrete way to check that it works.

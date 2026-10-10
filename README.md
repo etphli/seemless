@@ -15,6 +15,6 @@ A sleek, elegant interface with the restrained feel of T3 Code and the care of a
 - [Product brief](docs/product-brief.md) records confirmed requirements and open decisions.
 - [Feature ideas](docs/feature-ideas.md) describes universal hotkeys and ten proposed features.
 
-The first release scope will be chosen around real daily workflows before implementation begins.
+The first release will focus on universal hotkeys, app and window switching, a command bar, and clipboard history. Seemless will live mainly in the menu bar, with compact floating panels.
 
 Created in [T3 Code](https://t3.codes).
