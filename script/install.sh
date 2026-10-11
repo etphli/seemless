@@ -5,7 +5,11 @@ source "$ROOT_DIR/config/app.sh"
 
 ARCHIVE="${1:-$ROOT_DIR/dist/releases/v$APP_VERSION/Seemless-$APP_VERSION-macOS-arm64.zip}"
 STAGING="$ROOT_DIR/.build/install-$(date +%Y%m%d-%H%M%S)"
-TARGET="/Applications/Seemless.app"
+INSTALL_DIR="${SEEMLESS_INSTALL_DIR:-/Applications}"
+if [[ -z "${SEEMLESS_INSTALL_DIR:-}" && ! -w "$INSTALL_DIR" ]]; then
+  INSTALL_DIR="$HOME/Applications"
+fi
+TARGET="$INSTALL_DIR/Seemless.app"
 mkdir -p "$STAGING"
 ditto -x -k "$ARCHIVE" "$STAGING"
 SOURCE="$STAGING/Seemless.app"
@@ -14,6 +18,7 @@ if [[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$SOURCE/Contents
   exit 1
 fi
 codesign --verify --deep --strict "$SOURCE"
+mkdir -p "$INSTALL_DIR"
 if pgrep -x Seemless >/dev/null; then
   pkill -TERM -x Seemless
   for attempt in {1..50}; do

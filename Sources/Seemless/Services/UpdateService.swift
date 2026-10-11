@@ -50,9 +50,14 @@ final class UpdateService: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverDe
     }
 
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
-        self.error = "Updates could not be checked. The next scheduled check will retry."
+        let failure = error as NSError
         didCompleteInitialCheck = true
-        RuntimeLog.event(.updates, "Update check failed: code=\((error as NSError).code)", error: true)
+        if failure.domain == SUSparkleErrorDomain && failure.code == Int(SUError.noUpdateError.rawValue) {
+            self.error = nil
+            return
+        }
+        self.error = "Updates could not be checked. The next scheduled check will retry."
+        RuntimeLog.event(.updates, "Update check failed: code=\(failure.code)", error: true)
     }
 
     nonisolated func standardUserDriverShouldHandleShowingScheduledUpdate(_ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool) -> Bool { false }

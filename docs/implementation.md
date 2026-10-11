@@ -1,6 +1,6 @@
 # Implementation
 
-The downloadable 0.2.0 release is ad-hoc code signed and uses signed update packages. It is not Apple notarised.
+The downloadable 0.2.1 release is ad-hoc code signed and uses signed update packages. It is not Apple notarised.
 
 ## App structure
 

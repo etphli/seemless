@@ -35,4 +35,4 @@ The lower-level `script/verify_update.swift` driver accepts only a staged `Seeml
 
 The release update feed and archive use Sparkle Ed25519 signing. The app bundle uses local ad-hoc code signing. These provide update authenticity and bundle integrity, but do not provide Apple's Developer ID trust or notarisation. No Developer ID identity is configured on this machine yet.
 
-The installation script verifies the bundle before replacing the local app, backs up an existing Seemless bundle, clears only its quarantine attribute, and checks that the process runs from `/Applications/Seemless.app`. It does not disable Gatekeeper globally. Settings and clipboard history are stored separately and preserved.
+The installation script verifies the bundle before replacing the local app, backs up an existing Seemless bundle, clears only its quarantine attribute, and checks that the process runs from the installed path. It uses `/Applications` when writable and otherwise the user's `~/Applications` folder. `SEEMLESS_INSTALL_DIR` can override the folder. It does not disable Gatekeeper globally. Settings and clipboard history are stored separately and preserved.

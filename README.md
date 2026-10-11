@@ -4,7 +4,7 @@
 
 A native macOS menu bar app for quicker app switching, custom shortcuts, and clipboard reuse.
 
-Seemless 0.2.0 is available for Apple Silicon Macs running macOS 14 or later. Automated tests and native panel captures pass; permission-dependent keyboard and window workflows still need manual verification.
+Seemless 0.2.1 is available for Apple Silicon Macs running macOS 14 or later. Automated tests and native panel captures pass; permission-dependent keyboard and window workflows still need manual verification.
 
 [Download the latest release](https://github.com/etphli/seemless/releases/latest).
 
@@ -28,7 +28,7 @@ xattr -dr com.apple.quarantine /Applications/Seemless.app
 open /Applications/Seemless.app
 ```
 
-The local `./script/install.sh /path/to/Seemless-0.2.0-macOS-arm64.zip` verifies, backs up an existing Seemless installation, installs, clears its quarantine flag, and checks that the installed process is running.
+The local `./script/install.sh /path/to/Seemless-0.2.1-macOS-arm64.zip` verifies, backs up an existing Seemless installation, installs, clears its quarantine flag, and checks that the installed process is running. It uses `/Applications` when writable, otherwise `~/Applications`. Set `SEEMLESS_INSTALL_DIR` to choose a different folder; use that app's actual path in the commands above.
 
 Updates are checked at launch and daily. When a newer compatible release exists, select **Update to …** in Settings or the menu bar. Sparkle verifies both the release feed and update archive using the embedded public key before installation. It then replaces the app and restarts it; personal settings and clipboard history remain in Application Support.
 
