@@ -1,6 +1,6 @@
 # Seemless product brief
 
-Status: planning. First release scope and the main interface are confirmed. Detailed interactions are still open.
+Status: first native development build. Release scope and the main interface are confirmed. Automated tests, launch, and native captures pass; permission-dependent workflows need manual verification.
 
 ## Confirmed direction
 
@@ -12,7 +12,7 @@ Seemless will live mainly in the menu bar, with a command bar and floating panel
 
 The main frustration is a lack of useful shortcuts and interactions that take too many steps. Specific app workflows have not yet been named.
 
-All ten feature ideas remain candidates for the roadmap. Liking an idea does not yet define its final behaviour or commit it to the first release.
+All ten feature ideas remain on the roadmap. The command bar, app and window switching, and clipboard history are in the initial build alongside universal hotkeys.
 
 The project has a public GitHub repository. Public visibility alone does not decide licensing or distribution.
 
@@ -35,30 +35,33 @@ See [the feature draft](feature-ideas.md) for examples and unresolved questions.
 
 Build and polish universal hotkeys, app and window switching, a command bar, and clipboard history first. The drag shelf and other feature ideas remain on the roadmap.
 
-## Proposed interaction defaults
+## Confirmed behaviour
 
-The following defaults are proposals awaiting feedback:
+- Support both standard shortcuts and a Hyper key.
+- Discover installed apps so the user chooses their own quick-switch targets. Include an app picker for apps outside standard installation folders.
+- Store text, links, and images locally for seven days. Pinned entries remain until removed.
+- Keep Seemless mainly in the menu bar, with a command bar and floating panels.
+
+## Initial interaction defaults
 
 - Open compact panels on the active display and return focus to the previous app when dismissed.
 - Show each action's shortcut in the command bar so actions are discoverable before their shortcuts are memorised.
-- An app shortcut opens or focuses the app. Pressing it again returns to the previous window. The behaviour for several windows in the same app still needs definition.
-- Keep clipboard history on this Mac. Begin with searchable text and links, plain-text paste, pinned entries, and a way to clear history. Expire unpinned entries after seven days.
+- An app shortcut opens or focuses the app. Pressing it again while that app is active returns to the previously captured app or window. With Accessibility, remember each app's last captured window and offer the current app's named windows in the command bar.
+- Clipboard history supports text, links, and images, search, plain-text copying, pinned entries, app exclusions, and clearing unpinned history. Expire unpinned entries after seven days. Image entries are limited to 20 MB each.
 - Use a restrained charcoal appearance, subtle borders, readable spacing, and limited translucency. Support the system's light appearance as well.
 
-## Decisions to settle before implementation
+## Decisions still open
 
-- Which apps should get quick-switch shortcuts first, and which workflows should be used to verify them?
-- Which shortcut patterns should be supported, and which existing shortcuts must be preserved?
-- Should a dedicated modifier such as Caps Lock be supported for shortcuts?
-- How should switching choose among several windows of the same app?
+- Which real daily workflows should be used for the final desktop usability checks?
+- Should window targeting extend to all running apps, with saved per-window assignments?
 - Which appearance details should follow T3 Code, including colours, density, and window materials?
 - Is the initial app for personal use, with wider distribution later, or intended for other users from the start?
-- Which macOS versions should be supported?
-- Should the first clipboard release include images, and which content should be excluded or expired?
+- Should macOS 14 remain the minimum supported version? It is the current deployment target; older Macs still need testing.
+- What additional clipboard exclusions or storage limits should be available?
 
-## Proposed engineering direction
+## Engineering direction
 
-Use Swift and SwiftUI for the native app, with focused AppKit integration where system-wide shortcuts, window control, or floating panels need it. This is a proposal to validate during implementation.
+The app uses Swift and SwiftUI, with focused AppKit integration for the menu bar, floating panels, settings window, pasteboard, and app activation. Models and the clipboard repository live in a separate core module.
 
 Before promising support across apps, verify window switching, selected-text access, and keyboard navigation hints in the apps used most often. Define permission requests around the features that need them.
 

@@ -4,6 +4,8 @@ Build one app that reduces the steps between deciding what to do and doing it. U
 
 This document keeps the five features you liked and adds five new proposals. It is an idea draft, not a final specification.
 
+The [product brief](product-brief.md) records decisions made since this draft, including support for both shortcut styles and seven-day history for text, links, and images.
+
 Seemless is a native macOS app. Supported macOS versions and the implementation approach are still open.
 
 ## What the app should feel like
