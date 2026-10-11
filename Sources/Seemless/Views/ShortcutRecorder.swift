@@ -7,6 +7,8 @@ struct ShortcutRecorder: View {
     let model: AppModel
     let action: String
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var scheme
+    private var theme: SeemlessTheme { SeemlessTheme(scheme: scheme) }
     @State private var useHyper = false
     @State private var candidate: Shortcut?
     @State private var error: String?
@@ -15,8 +17,9 @@ struct ShortcutRecorder: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: "keyboard").font(.system(size: 28, weight: .light)).foregroundStyle(.secondary)
-            Text("Set a shortcut").font(.system(size: 20, weight: .semibold))
+            Image(systemName: "keyboard").font(.system(size: 22, weight: .light)).foregroundStyle(theme.accent)
+                .frame(width: 48, height: 48).background(theme.selection, in: RoundedRectangle(cornerRadius: 12))
+            Text("Set a shortcut").font(.system(size: 20, weight: .medium)).tracking(-0.4)
             Text(model.actionName(action)).font(.system(size: 13)).foregroundStyle(.secondary)
             Picker("Shortcut type", selection: $useHyper) {
                 Text("Standard").tag(false)
@@ -26,7 +29,8 @@ struct ShortcutRecorder: View {
                 Text(candidate?.display ?? "Press your shortcut")
                     .font(.system(size: 23, weight: .medium, design: .monospaced))
                     .frame(maxWidth: .infinity).frame(height: 65)
-                    .background(.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 10))
+                    .background(theme.inset, in: RoundedRectangle(cornerRadius: 9))
+                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(theme.accent.opacity(isListening ? 0.3 : 0.12)))
             }.buttonStyle(.plain).help("Record another shortcut")
             Text(useHyper ? "Press a key to pair with Hyper. Enable Caps Lock Hyper in General to use it." : "Hold Command, Option, or Control, then press a key. Escape cancels.")
                 .font(.system(size: 12)).foregroundStyle(.secondary).multilineTextAlignment(.center).frame(height: 35)
@@ -41,7 +45,8 @@ struct ShortcutRecorder: View {
                 }.buttonStyle(.borderedProminent).keyboardShortcut(.defaultAction).disabled(candidate == nil || error != nil)
             }
         }
-        .padding(30).frame(width: 390)
+        .padding(28).frame(width: 370)
+        .foregroundStyle(theme.text).tint(theme.accent).background(theme.canvas)
         .onChange(of: useHyper) { _, _ in candidate = nil; error = nil; isListening = true }
         .onAppear {
             model.hotkeys.suspend()

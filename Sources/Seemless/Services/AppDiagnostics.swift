@@ -24,6 +24,7 @@ enum AppDiagnostics {
         let hyperEnabled: Bool
         let clipboardRecording: Bool
         let sampleHistoryCount: Int
+        let updateAvailableVersion: String?
         let captureMethod: String
         let captures: [Capture]
     }
@@ -31,6 +32,12 @@ enum AppDiagnostics {
     static func run(model: AppModel, destination: URL) async {
         do {
             try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+            if CommandLine.arguments.contains("--check-updates") {
+                for _ in 0..<30 {
+                    if model.updates.didCompleteInitialCheck { break }
+                    try await Task.sleep(for: .milliseconds(100))
+                }
+            }
             _ = try await model.clipboard.repository.insert(ClipboardEntry(fingerprint: "diagnostic-text", payload: .text("Small actions, fewer steps.\n\nOpen the app you need, reuse a recent copy, and get back to your work."), isPinned: true, sourceName: "Notes"))
             _ = try await model.clipboard.repository.insert(ClipboardEntry(fingerprint: "diagnostic-link", payload: .link("https://developer.apple.com"), sourceName: "Safari"))
             await model.clipboard.refresh()
@@ -64,7 +71,7 @@ enum AppDiagnostics {
                     model.panels.dismiss(restoreFocus: false)
                 }
             }
-            let report = Report(capturedAt: .now, processID: ProcessInfo.processInfo.processIdentifier, appCount: model.catalog.apps.count, shortcutsRequested: model.settings.preferences.shortcuts.count, shortcutsFailed: model.shortcutFailures.count, accessibilityGranted: AXIsProcessTrusted(), hyperEnabled: model.hyper.isEnabled, clipboardRecording: model.clipboard.isMonitoring, sampleHistoryCount: model.clipboard.entries.count, captureMethod: "AppKit content capture from visible native windows; synthetic clipboard examples", captures: captures)
+            let report = Report(capturedAt: .now, processID: ProcessInfo.processInfo.processIdentifier, appCount: model.catalog.apps.count, shortcutsRequested: model.settings.preferences.shortcuts.count, shortcutsFailed: model.shortcutFailures.count, accessibilityGranted: AXIsProcessTrusted(), hyperEnabled: model.hyper.isEnabled, clipboardRecording: model.clipboard.isMonitoring, sampleHistoryCount: model.clipboard.entries.count, updateAvailableVersion: model.updates.availableVersion, captureMethod: "AppKit content capture from visible native windows; synthetic clipboard examples", captures: captures)
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             encoder.dateEncodingStrategy = .iso8601

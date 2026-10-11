@@ -1,5 +1,6 @@
 import AppKit
 import CryptoKit
+import ImageIO
 import Observation
 import SeemlessCore
 
@@ -15,6 +16,7 @@ final class ClipboardStore {
     private var timer: Timer?
     private var cleanupTimer: Timer?
     private var isCapturing = false
+    private let thumbnails = NSCache<NSString, CGImage>()
     var excludedApps: Set<String> = []
 
     init(root: URL, pasteboard: NSPasteboard = .general) {
@@ -22,6 +24,8 @@ final class ClipboardStore {
         self.pasteboard = pasteboard
         lastChange = pasteboard.changeCount
         repository = HistoryRepository(root: root)
+        thumbnails.totalCostLimit = 24 * 1024 * 1024
+        thumbnails.countLimit = 128
     }
 
     func load() async {
@@ -128,6 +132,18 @@ final class ClipboardStore {
             self.error = "This clipboard item could not be copied: \(error.localizedDescription)"
             return false
         }
+    }
+
+    func thumbnail(for entry: ClipboardEntry, maximumSize: Int) async -> CGImage? {
+        let key = "\(entry.fingerprint):\(maximumSize)" as NSString
+        if let cached = thumbnails.object(forKey: key) { return cached }
+        guard let data = try? await repository.imageData(for: entry) else { return nil }
+        let thumbnail = await Task.detached(priority: .utility) {
+            guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil as CGImage? }
+            return CGImageSourceCreateThumbnailAtIndex(source, 0, [kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceThumbnailMaxPixelSize: maximumSize, kCGImageSourceCreateThumbnailWithTransform: true, kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+        }.value
+        if let thumbnail { thumbnails.setObject(thumbnail, forKey: key, cost: thumbnail.bytesPerRow * thumbnail.height) }
+        return thumbnail
     }
 
     func stop() { setMonitoring(false); cleanupTimer?.invalidate(); cleanupTimer = nil }

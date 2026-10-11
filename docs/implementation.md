@@ -1,6 +1,6 @@
-# Initial implementation
+# Implementation
 
-This is a native development build, not a notarised distribution release.
+The downloadable 0.2.0 release is ad-hoc code signed and uses signed update packages. It is not Apple notarised.
 
 ## App structure
 
@@ -32,7 +32,7 @@ Recording is opt-in. Seemless polls the native pasteboard change count every 0.6
 
 Text and links are saved in an atomic JSON index. Images are normalised to PNG and stored separately, with a 20 MB limit per image. Repeated copies update an existing entry's timestamp while preserving its identity and pin. Unpinned entries expire seven days after their latest captured copy. Expiry runs at startup, on repository mutations, and once per minute while running.
 
-The repository serialises changes, writes the index before removing referenced images, and cleans up orphaned PNG files on load. Pausing recording does not pause expiry. Clearing history keeps pinned entries. There is no cloud sync or network service.
+The repository serialises changes, writes the index before removing referenced images, and cleans up orphaned PNG files on load. Pausing recording does not pause expiry. Clearing history keeps pinned entries. Clipboard data stays local and has no cloud sync.
 
 Data lives under the user's `Library/Application Support/Seemless` directory, outside the source checkout. The clipboard folder is restricted to the owning user. History is stored in readable local files rather than encrypted as a secrets vault.
 
@@ -42,13 +42,29 @@ Paste requires Accessibility. Seemless restores the captured app/window, waits b
 
 The monitor follows [NSPasteboard change count](https://developer.apple.com/documentation/appkit/nspasteboard/changecount). It reports denied access when [pasteboard access behaviour](https://developer.apple.com/documentation/appkit/nspasteboard/accessbehavior-86972) exposes that state. Permission prompting uses [Apple's Accessibility trust API](https://developer.apple.com/documentation/applicationservices/1459186-axisprocesstrustedwithoptions).
 
+## Interface and performance
+
+Panels use adaptive graphite and light surfaces, thin borders, violet selection, compact shortcut badges, and consistent spacing. The command bar groups applications, windows, and actions; the clipboard panel separates history from its preview and metadata.
+
+Command candidates and app ranking are prepared when their underlying state changes. Search filters run when the query changes; moving selection or hovering does not repeat app sorting. Clipboard filtering similarly runs when entries, query, or filter change. Image thumbnails decode off the main actor and use a bounded memory cache. Clipboard titles inspect only a bounded portion of the first nonempty line.
+
+## Updates
+
+Sparkle 2.10.0 checks the public GitHub release feed at launch and daily. Its information-only initial check updates the app's observable availability state. Settings and the menu bar display the update control only when a compatible newer release is found. Scheduled reminders stay quiet. Selecting Update opens the native download/install flow, which verifies the signed feed and archive and can relaunch the app after replacement.
+
+The Ed25519 private release key is stored in the maintainer's Keychain; the public key is embedded in the app. No private key is checked into Git. Archive authentication and Apple's Developer ID/notarisation are separate; the latter is not available on the current build machine. The updater does not send clipboard contents or enable system profiling. Checks contact GitHub for release metadata and packages.
+
+See [Releasing](releasing.md) for the repeatable build, signing, verification, and publication workflow.
+
 ## Verification
 
-The local run passed 16 tests, compiled the app bundle, launched its process, and verified the ad-hoc signature. The final diagnostic run discovered 182 apps and registered both default shortcuts without failures. Test and diagnostic results do not replace the outstanding manual checks below.
+The local run passed 17 tests, compiled the app bundle, launched its process, and verified the ad-hoc signature. Diagnostics discovered installed apps and registered both default shortcuts without failures. Test and diagnostic results do not replace the outstanding manual checks below.
 
-The test suite exercises seven-day expiry, pinned item survival, duplicate copies, concurrent persistence, image cleanup, safe image paths, shortcut conflicts, search ranking, preference migration, and key mapping restoration rules.
+The test suite exercises seven-day expiry, pinned item survival, duplicate copies, concurrent persistence, image cleanup, safe image paths, bounded clipboard titles, shortcut conflicts, search ranking, preference migration, and key mapping restoration rules.
 
 Platform tests use separate native pasteboards to capture and copy text, links, and PNG images. They check concealed-content and app exclusions, discovery of nested apps, helper exclusions, real hotkey registration conflicts, and Hyper event translation without changing system key mappings.
+
+Updater integration checks use Sparkle's real downloader and installer on disposable app copies inside `.build`. A signed update upgrades the staged bundle and passes deep code-signature verification. Changing a byte in the archive makes Sparkle reject it with a validation error, leaving the old bundle intact. An older diagnostic app also reads the signed feed and renders the conditional update button in its native Settings window.
 
 A rendering test uses native SwiftUI hosting views in invisible test windows to render the command bar, clipboard panel, and settings in dark and light appearances. It can save PNG artifacts via `SEEMLESS_SNAPSHOT_DIR`. It does not operate the user's desktop.
 
@@ -58,4 +74,4 @@ Lifecycle, shortcut registration, panel presentation, and clipboard load/recordi
 
 Accessibility was not granted during verification. Live shortcut activation, window return, keyboard navigation, direct paste, physical Caps Lock Hyper, multiple displays, and full-screen Spaces still need manual checks. Diagnostics do not enable Hyper, recording, or macOS permissions.
 
-The build script stages a local `.app` bundle, generates its icon, and applies an ad-hoc signature. A developer identity and notarisation workflow are needed before distributing a release to other Macs. Rebuilding an ad-hoc app may require macOS permissions to be granted again.
+The build script stages a local `.app` bundle, embeds Sparkle, generates its icon, and applies an ad-hoc signature. The current downloadable archive targets Apple Silicon. A Developer ID identity and notarisation are still needed for trusted initial installation on other Macs without a local exception. Rebuilding an ad-hoc app may require macOS permissions to be granted again.

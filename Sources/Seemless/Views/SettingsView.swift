@@ -14,16 +14,18 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     }
     var subtitle: String {
         switch self {
-        case .general: return "Set up Seemless for the way you work."
-        case .shortcuts: return "Your actions, one key combination away."
-        case .apps: return "Every app on your Mac, ready for a shortcut."
-        case .clipboard: return "Find something you copied and keep what matters."
+        case .general: return "Shortcuts, focus, and everyday actions."
+        case .shortcuts: return "Make your frequent actions immediate."
+        case .apps: return "Choose your apps. Give each one a shortcut."
+        case .clipboard: return "Keep useful copies close, and keep them local."
         }
     }
 }
 
 struct SettingsView: View {
     let model: AppModel
+    @Environment(\.colorScheme) private var scheme
+    private var theme: SeemlessTheme { SeemlessTheme(scheme: scheme) }
     @State private var section: SettingsSection = .general
     @State private var appQuery = ""
     @State private var recording: RecordingTarget?
@@ -34,34 +36,39 @@ struct SettingsView: View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
-                    Image(systemName: "square.stack.3d.up").font(.system(size: 24, weight: .medium))
-                    Text("Seemless").font(.system(size: 17, weight: .semibold))
-                }.padding(.horizontal, 20).padding(.top, 25).padding(.bottom, 27)
+                    SeemlessMark(size: 28)
+                    Text("Seemless").font(.system(size: 15, weight: .semibold)).tracking(-0.3)
+                }.padding(.horizontal, 20).padding(.top, 22).padding(.bottom, 25)
                 List(selection: $section) {
                     ForEach(SettingsSection.allCases) { value in
                         HStack(spacing: 9) {
-                            Image(systemName: value.symbol).frame(width: 18).foregroundStyle(.secondary)
-                            Text(value.rawValue).foregroundStyle(.primary)
-                        }.tag(value).padding(.vertical, 5)
+                            Image(systemName: value.symbol).frame(width: 18).foregroundStyle(section == value ? theme.accent : theme.secondary)
+                            Text(value.rawValue).font(.system(size: 12, weight: .medium)).foregroundStyle(section == value ? theme.accent : theme.secondary)
+                        }.tag(value).padding(.vertical, 4).listItemTint(theme.accent)
                     }
-                }.listStyle(.sidebar)
+                }.listStyle(.sidebar).scrollContentBackground(.hidden)
                 VStack(alignment: .leading, spacing: 7) {
-                    Text("Ready in the menu bar.").font(.system(size: 11)).foregroundStyle(.secondary)
-                    Text("0.1 · On this Mac").font(.system(size: 10)).foregroundStyle(.tertiary)
+                    HStack(spacing: 6) { Circle().fill(theme.accent).frame(width: 4, height: 4); Text("In your menu bar").font(.system(size: 10)).foregroundStyle(theme.secondary) }
+                    Text("Version \(model.updates.currentVersion)").font(.system(size: 9)).foregroundStyle(theme.muted)
+                    if let version = model.updates.availableVersion {
+                        Button { model.updates.installAvailableUpdate() } label: {
+                            HStack(spacing: 6) { Image(systemName: "arrow.down.circle"); Text("Update to \(version)") }
+                        }.buttonStyle(QuietButtonStyle(prominent: true)).padding(.top, 6)
+                    }
                 }.padding(20)
-            }.frame(width: 185).background(.bar)
-            Divider()
+            }.frame(width: 172).background(.bar)
+            theme.line.frame(width: 1)
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 7) {
-                        Text(section.rawValue).font(.system(size: 26, weight: .semibold))
-                        Text(section.subtitle).font(.system(size: 12)).foregroundStyle(.secondary)
+                        Text(section.rawValue).font(.system(size: 24, weight: .medium)).tracking(-0.6)
+                        Text(section.subtitle).font(.system(size: 11.5)).foregroundStyle(theme.secondary)
                     }
                     Spacer()
-                    Button { model.show(.commands) } label: { Image(systemName: "command") }.buttonStyle(.bordered).help("Open command bar")
-                }.padding(.horizontal, 30).padding(.top, 28).padding(.bottom, 24)
+                    Button { model.show(.commands) } label: { HStack(spacing: 6) { Image(systemName: "command"); Text("Open") } }.buttonStyle(QuietButtonStyle()).help("Open command bar")
+                }.padding(.horizontal, 28).padding(.top, 25).padding(.bottom, 22)
                 if let notice = model.notice ?? model.settings.error {
-                    Text(notice).font(.caption).foregroundStyle(.red).padding(.horizontal, 30).padding(.bottom, 12)
+                    Text(notice).font(.caption).foregroundStyle(.red).padding(.horizontal, 28).padding(.bottom, 12)
                 }
                 switch section {
                 case .general: general
@@ -71,19 +78,23 @@ struct SettingsView: View {
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .background(.regularMaterial)
+        .foregroundStyle(theme.text)
+        .font(.system(size: 12))
+        .tint(theme.accent)
+        .background(theme.canvas)
         .groupBoxStyle(SettingsGroupStyle())
         .sheet(item: $recording) { ShortcutRecorder(model: model, action: $0.id) }
         .sheet(isPresented: $showExclusions) { ExclusionPicker(model: model) }
         .confirmationDialog("Clear unpinned clipboard history?", isPresented: $showClearConfirmation) {
             Button("Clear unpinned items", role: .destructive) { Task { await model.clipboard.clearUnpinned() } }
         } message: { Text("Pinned items will remain. Cleared items cannot be recovered.") }
-        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in model.hasAccessibility = model.switcher.hasAccessibility }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in model.hasAccessibility = model.switcher.hasAccessibility }
     }
 
     private var general: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 22) {
+                sectionLabel("SHORTCUTS")
                 GroupBox {
                     VStack(spacing: 0) {
                         settingsAction("Command bar", detail: "Search apps and actions", symbol: "command", action: ActionID.commandBar)
@@ -100,32 +111,30 @@ struct SettingsView: View {
                                 Spacer()
                                 Toggle("Enable Caps Lock Hyper", isOn: Binding(get: { model.hyper.isEnabled }, set: { model.setHyperEnabled($0) })).labelsHidden().toggleStyle(.switch)
                             }
-                            Text("Hold Caps Lock with another key to run Hyper shortcuts. Your original Caps Lock mapping returns when you turn this off or quit.")
+                            Text("Hold Caps Lock with a key to run its shortcut. Your original mapping returns when you disable Hyper or quit.")
                                 .font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             if let error = model.hyper.error { Text(error).font(.caption).foregroundStyle(.red) }
                         }.padding(10)
                     }
                 }
                 VStack(alignment: .leading, spacing: 12) {
-                    sectionLabel("SYSTEM ACCESS")
+                    sectionLabel("PERMISSIONS")
                     GroupBox {
                         HStack(alignment: .center, spacing: 15) {
                             Image(systemName: model.hasAccessibility ? "checkmark.shield" : "hand.raised").font(.system(size: 22)).foregroundStyle(.secondary)
                             VStack(alignment: .leading, spacing: 5) {
-                                Text(model.hasAccessibility ? "Accessibility is enabled" : "Allow Accessibility").font(.system(size: 13, weight: .medium))
-                                Text("Needed for precise window focus, direct paste, and Hyper shortcuts.").font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                                Text(model.hasAccessibility ? "Accessibility enabled" : "Accessibility").font(.system(size: 13, weight: .medium))
+                                Text("Precise window focus, direct paste, and Caps Lock Hyper.").font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer()
-                            if !model.hasAccessibility { Button("Enable…") { model.requestAccessibility() } }
+                            if !model.hasAccessibility { Button("Enable access") { model.requestAccessibility() }.buttonStyle(QuietButtonStyle(prominent: true)) }
                         }.padding(10)
                     }
-                    Button("Open Input Monitoring settings…") {
+                    Button("Input Monitoring settings ↗") {
                         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
-                    }.buttonStyle(.link).font(.system(size: 11))
+                    }.buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(theme.accent)
                 }
-                Text("Seemless stays in your menu bar. Close this window and use your shortcuts whenever you need it.")
-                    .font(.system(size: 12)).foregroundStyle(.tertiary)
-            }.padding(.horizontal, 30).padding(.bottom, 30)
+            }.padding(.horizontal, 28).padding(.bottom, 28)
         }
     }
 
@@ -159,7 +168,7 @@ struct SettingsView: View {
                     }
                 }
                 Text("Shortcuts work across apps. Conflicts within Seemless are blocked; shortcuts reserved by macOS or another app are flagged when registered.").font(.system(size: 11)).foregroundStyle(.tertiary)
-            }.padding(.horizontal, 30).padding(.bottom, 30)
+            }.padding(.horizontal, 28).padding(.bottom, 28)
         }
     }
 
@@ -169,12 +178,12 @@ struct SettingsView: View {
                 TextField("Search installed apps", text: $appQuery).textFieldStyle(.roundedBorder)
                 Button("Add app…") { model.addApp() }
                 Button { Task { await model.scanApps() } } label: { Image(systemName: "arrow.clockwise") }.help("Rescan installed apps").disabled(model.catalog.isScanning)
-            }.padding(.horizontal, 30)
+            }.padding(.horizontal, 28)
             HStack {
                 Text("\(model.catalog.apps.count) installed apps").font(.system(size: 11)).foregroundStyle(.secondary)
                 Spacer()
                 Text("Star apps for quick access").font(.system(size: 11)).foregroundStyle(.tertiary)
-            }.padding(.horizontal, 30)
+            }.padding(.horizontal, 28)
             Divider()
             if model.catalog.isScanning { ProgressView("Finding your apps…").padding(30) }
             ScrollView {
@@ -183,7 +192,7 @@ struct SettingsView: View {
                         appRow(app)
                         Divider().padding(.leading, 48)
                     }
-                }.padding(.horizontal, 30)
+                }.padding(.horizontal, 28)
             }
         }
     }
@@ -224,13 +233,13 @@ struct SettingsView: View {
                     Button("Clear unpinned…", role: .destructive) { showClearConfirmation = true }.disabled(model.clipboard.entries.allSatisfy(\.isPinned))
                 }
                 if let error = model.clipboard.error { Text(error).font(.caption).foregroundStyle(.red) }
-            }.padding(.horizontal, 30).padding(.bottom, 30)
+            }.padding(.horizontal, 28).padding(.bottom, 28)
         }
     }
 
     private func settingsAction(_ title: String, detail: String, symbol: String, action: String) -> some View {
         HStack(spacing: 13) {
-            Image(systemName: symbol).font(.system(size: 18)).foregroundStyle(.secondary).frame(width: 27)
+            Image(systemName: symbol).font(.system(size: 14)).foregroundStyle(theme.accent).frame(width: 30, height: 30).background(theme.selection, in: RoundedRectangle(cornerRadius: 7))
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.system(size: 13, weight: .medium))
                 Text(model.shortcutFailures[action] ?? detail).font(.system(size: 11)).foregroundStyle(model.shortcutFailures[action] == nil ? Color.secondary : Color.red).fixedSize(horizontal: false, vertical: true)
@@ -244,34 +253,36 @@ struct SettingsView: View {
                     model.registerShortcuts()
                 } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.tertiary) }.buttonStyle(.plain).help("Remove shortcut").accessibilityLabel("Remove shortcut for \(title)")
             }
-        }.padding(.vertical, 12).padding(.horizontal, 7)
+        }.padding(.vertical, 10).padding(.horizontal, 7)
     }
 
     private func appRow(_ app: InstalledApp) -> some View {
         HStack(spacing: 12) {
-            Image(nsImage: model.catalog.icon(for: app)).resizable().scaledToFit().frame(width: 31, height: 31)
+            Image(nsImage: model.catalog.icon(for: app)).resizable().scaledToFit().frame(width: 28, height: 28)
             VStack(alignment: .leading, spacing: 4) {
                 Text(app.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
                 if let failure = model.shortcutFailures[ActionID.app(app.id)] { Text(failure).font(.system(size: 10)).foregroundStyle(.red).lineLimit(2) }
             }
             Spacer()
-            Button { model.toggleFavourite(app.id) } label: { Image(systemName: model.settings.preferences.favourites.contains(app.id) ? "star.fill" : "star").foregroundStyle(.secondary) }.buttonStyle(.plain).help("Toggle quick access").accessibilityLabel("Toggle quick access for \(app.name)")
+            Button { model.toggleFavourite(app.id) } label: { Image(systemName: model.settings.preferences.favourites.contains(app.id) ? "star.fill" : "star").foregroundStyle(model.settings.preferences.favourites.contains(app.id) ? theme.accent : theme.muted) }.buttonStyle(.plain).help("Toggle quick access").accessibilityLabel("Toggle quick access for \(app.name)")
             Button { recording = RecordingTarget(id: ActionID.app(app.id)) } label: { ShortcutBadge(text: model.settings.preferences.shortcuts[ActionID.app(app.id)]?.display ?? "Set shortcut") }.buttonStyle(.plain).accessibilityLabel("Set shortcut for \(app.name)")
         }.padding(.vertical, 12)
     }
 
     private func sectionLabel(_ text: String) -> some View {
-        Text(text).font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(.tertiary)
+        Text(text).font(.system(size: 9, weight: .medium)).tracking(1.2).foregroundStyle(theme.muted)
     }
 }
 
 private struct SettingsGroupStyle: GroupBoxStyle {
+    @Environment(\.colorScheme) private var scheme
     func makeBody(configuration: Configuration) -> some View {
+        let theme = SeemlessTheme(scheme: scheme)
         configuration.content
-            .padding(8)
+            .padding(6)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.primary.opacity(0.08)))
+            .background(theme.raised, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(theme.line))
     }
 }
 

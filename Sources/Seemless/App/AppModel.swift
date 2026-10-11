@@ -14,6 +14,7 @@ final class AppModel {
     let hyper: HyperService
     let switcher = AppSwitcher()
     let hotkeys = HotkeyService()
+    let updates = UpdateService()
     var shortcutFailures: [String: String] = [:]
     var notice: String?
     var origin: FocusTarget?
@@ -27,7 +28,7 @@ final class AppModel {
         hyper = HyperService(root: root)
     }
 
-    func start(showWelcome: Bool = true) async {
+    func start(showWelcome: Bool = true, checkUpdates: Bool = true) async {
         panels = PanelCoordinator(model: self)
         hyper.recover()
         if settings.preferences.hyperEnabled { hyper.enable() }
@@ -37,6 +38,7 @@ final class AppModel {
         clipboard.excludedApps = settings.preferences.excludedApps
         clipboard.setMonitoring(settings.preferences.clipboardEnabled)
         await scanApps()
+        if checkUpdates { updates.start() }
         RuntimeLog.event(.lifecycle, "Ready: apps=\(self.catalog.apps.count) accessibility=\(self.hasAccessibility)")
         if showWelcome, !UserDefaults.standard.bool(forKey: "hasLaunched") {
             panels.showSettings()

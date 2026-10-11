@@ -38,6 +38,13 @@ struct ShortcutAndMappingTests {
     }
 
     @Test
+    func testClipboardTitlesBoundLongCopiesAndPreserveTheFirstNonemptyLine() {
+        #expect(ClipboardPayload.text("\n\nFirst line\nSecond line").title == "First line")
+        #expect(ClipboardPayload.text(String(repeating: "🖥️", count: 10_000) + "\nAfter").title == String(repeating: "🖥️", count: 120))
+        #expect(ClipboardPayload.text("\n\n").title == "\n\n")
+    }
+
+    @Test
     func testOlderPreferencesKeepDefaultsForNewFields() throws {
         let preferences = try JSONDecoder().decode(Preferences.self, from: Data("{\"clipboardEnabled\":true}".utf8))
         #expect(preferences.clipboardEnabled)

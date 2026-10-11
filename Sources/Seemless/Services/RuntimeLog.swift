@@ -3,7 +3,7 @@ import OSLog
 
 @MainActor
 enum RuntimeLog {
-    enum Category: String { case lifecycle, shortcuts, windows, clipboard }
+    enum Category: String { case lifecycle, shortcuts, windows, clipboard, updates }
     private struct Entry: Encodable {
         let timestamp: String
         let category: String

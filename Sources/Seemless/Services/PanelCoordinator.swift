@@ -22,7 +22,7 @@ final class PanelCoordinator: NSObject, NSWindowDelegate {
 
     func show(_ kind: PanelKind) {
         dismiss(restoreFocus: false)
-        let size = kind == .commands ? NSSize(width: 660, height: 500) : NSSize(width: 800, height: 550)
+        let size = kind == .commands ? NSSize(width: 640, height: 480) : NSSize(width: 780, height: 520)
         let window = FloatingPanel(contentRect: NSRect(origin: .zero, size: size), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         window.title = kind == .commands ? "Seemless command bar" : "Seemless clipboard history"
         window.isOpaque = false
@@ -67,9 +67,10 @@ final class PanelCoordinator: NSObject, NSWindowDelegate {
     func showSettings() {
         dismiss(restoreFocus: false)
         if settingsWindow == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 850, height: 640), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 840, height: 620), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
             window.title = "Seemless settings"
             window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
             window.minSize = NSSize(width: 760, height: 540)
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsView(model: model))

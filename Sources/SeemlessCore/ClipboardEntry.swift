@@ -28,7 +28,8 @@ public enum ClipboardPayload: Codable, Equatable, Sendable {
     public var title: String {
         switch self {
         case .text(let value), .link(let value):
-            return String(value.split(whereSeparator: \.isNewline).first.map(String.init) ?? value).prefix(120).description
+            let firstLine = value.drop(while: \.isNewline).prefix(120).prefix(while: { !$0.isNewline })
+            return firstLine.isEmpty ? String(value.prefix(120)) : String(firstLine)
         case .image(_, let width, let height): return "Image · \(width) × \(height)"
         }
     }

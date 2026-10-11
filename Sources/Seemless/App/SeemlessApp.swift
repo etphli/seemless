@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Seemless", isDirectory: true)
         RuntimeLog.event(.lifecycle, "Launching: diagnostics=\(diagnosticDirectory != nil)")
         model = AppModel(root: root)
+        model.updates.onAvailabilityChanged = { [weak self] in self?.rebuildMenu() }
         installMainMenu()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: "Seemless")
@@ -46,7 +47,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu?.delegate = self
         rebuildMenu()
         Task {
-            await model.start(showWelcome: diagnosticDirectory == nil)
+            let checkUpdates = diagnosticDirectory == nil || arguments.contains("--check-updates")
+            await model.start(showWelcome: diagnosticDirectory == nil, checkUpdates: checkUpdates)
             if let diagnosticDirectory { await AppDiagnostics.run(model: model, destination: diagnosticDirectory) }
         }
     }
@@ -101,6 +103,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(hyper)
         menu.addItem(.separator())
         add("Settings…", action: #selector(settings), to: menu)
+        if let version = model.updates.availableVersion {
+            add("Update to \(version)…", action: #selector(update), to: menu)
+        }
         add("Quit Seemless", action: #selector(quit), to: menu)
     }
 
@@ -115,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func clipboard() { model.show(.clipboard) }
     @objc private func toggleClipboard() { model.setClipboardEnabled(!model.clipboard.isMonitoring) }
     @objc private func settings() { model.panels?.showSettings() }
+    @objc private func update() { model.updates.installAvailableUpdate() }
     @objc private func quit() { NSApp.terminate(nil) }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

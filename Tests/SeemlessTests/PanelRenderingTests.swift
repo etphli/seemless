@@ -21,9 +21,9 @@ struct PanelRenderingTests {
         let destination = ProcessInfo.processInfo.environment["SEEMLESS_SNAPSHOT_DIR"].map { URL(fileURLWithPath: $0) }
         for scheme in [ColorScheme.dark, .light] {
             let suffix = scheme == .dark ? "dark" : "light"
-            try await render(CommandBarView(model: model), size: NSSize(width: 660, height: 500), scheme: scheme, name: "commands-\(suffix)", destination: destination)
-            try await render(ClipboardPanelView(model: model), size: NSSize(width: 800, height: 550), scheme: scheme, name: "clipboard-\(suffix)", destination: destination)
-            try await render(SettingsView(model: model), size: NSSize(width: 850, height: 640), scheme: scheme, name: "settings-\(suffix)", destination: destination)
+            try await render(CommandBarView(model: model), size: NSSize(width: 640, height: 480), scheme: scheme, name: "commands-\(suffix)", destination: destination)
+            try await render(ClipboardPanelView(model: model), size: NSSize(width: 780, height: 520), scheme: scheme, name: "clipboard-\(suffix)", destination: destination)
+            try await render(SettingsView(model: model), size: NSSize(width: 840, height: 620), scheme: scheme, name: "settings-\(suffix)", destination: destination)
         }
     }
 
