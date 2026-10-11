@@ -48,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         rebuildMenu()
         Task {
             let checkUpdates = diagnosticDirectory == nil || arguments.contains("--check-updates")
-            await model.start(showWelcome: diagnosticDirectory == nil, checkUpdates: checkUpdates)
+            await model.start(showSettingsOnLaunch: diagnosticDirectory == nil, checkUpdates: checkUpdates)
             if let diagnosticDirectory { await AppDiagnostics.run(model: model, destination: diagnosticDirectory) }
         }
     }
@@ -122,6 +122,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func settings() { model.panels?.showSettings() }
     @objc private func update() { model.updates.installAvailableUpdate() }
     @objc private func quit() { NSApp.terminate(nil) }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        RuntimeLog.event(.lifecycle, "Reopen requested")
+        model?.panels?.showSettings()
+        return false
+    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         model.hyper.disable()

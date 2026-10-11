@@ -40,7 +40,7 @@ Requires macOS 14 or later and Swift 6 through Xcode or Command Line Tools. The 
 ./script/build_and_run.sh
 ```
 
-The script resolves Sparkle 2.10.0, creates and opens `dist/Seemless.app`, and bundles its framework and license. Seemless stays in the menu bar and opens Settings on first launch.
+The script resolves Sparkle 2.10.0, creates and opens `dist/Seemless.app`, and bundles its framework and license. Opening Seemless shows Settings; reopening the running app brings Settings forward. Closing Settings leaves Seemless in the menu bar.
 
 Default shortcuts are `⌥⌘Space` for the command bar and `⇧⌘V` for clipboard history. Change them in Settings, where you can also assign shortcuts to any discovered app.
 

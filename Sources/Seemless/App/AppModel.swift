@@ -28,7 +28,7 @@ final class AppModel {
         hyper = HyperService(root: root)
     }
 
-    func start(showWelcome: Bool = true, checkUpdates: Bool = true) async {
+    func start(showSettingsOnLaunch: Bool = true, checkUpdates: Bool = true) async {
         panels = PanelCoordinator(model: self)
         hyper.recover()
         if settings.preferences.hyperEnabled { hyper.enable() }
@@ -40,10 +40,7 @@ final class AppModel {
         await scanApps()
         if checkUpdates { updates.start() }
         RuntimeLog.event(.lifecycle, "Ready: apps=\(self.catalog.apps.count) accessibility=\(self.hasAccessibility)")
-        if showWelcome, !UserDefaults.standard.bool(forKey: "hasLaunched") {
-            panels.showSettings()
-            UserDefaults.standard.set(true, forKey: "hasLaunched")
-        }
+        if showSettingsOnLaunch { panels.showSettings() }
     }
 
     func registerShortcuts() {

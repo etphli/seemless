@@ -78,9 +78,10 @@ final class PanelCoordinator: NSObject, NSWindowDelegate {
             settingsWindow = window
         }
         model.hasAccessibility = model.switcher.hasAccessibility
+        if settingsWindow?.isMiniaturized == true { settingsWindow?.deminiaturize(nil) }
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate()
-        RuntimeLog.event(.windows, "Opened settings: window=\(self.settingsWindow?.windowNumber ?? -1)")
+        RuntimeLog.event(.windows, "Opened settings: window=\(self.settingsWindow?.windowNumber ?? -1) visible=\(self.settingsWindow?.isVisible ?? false)")
     }
 
     func windowDidResignKey(_ notification: Notification) {
