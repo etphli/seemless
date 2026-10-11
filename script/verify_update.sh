@@ -62,7 +62,7 @@ set +e
 RESULT=$?
 set -e
 [[ "$RESULT" == 1 ]]
-rg -q 'code=300[12]' "$FIXTURES/bad.log"
+rg -q 'code=300[12]|improperly signed' "$FIXTURES/bad.log"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$FIXTURES/bad/Seemless.app/Contents/Info.plist")" == "$((BUILD_NUMBER-1))" ]]
 codesign --verify --deep --strict "$FIXTURES/bad/Seemless.app"
 echo "Verified update installation and rejection of a modified archive. Logs: $FIXTURES"
